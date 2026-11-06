@@ -1,0 +1,632 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>CFA Ethics Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass+Mono:wght@500&family=Patrick+Hand&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Board colours follow the hand-drawn original (chalk, red bands, teal house). Accents: No. 23, Cinnamon Buff + Light Mauve, place dark. */
+/* Layout: an infinite canvas; each node opens a small card beside it, in canvas space, that pans and zooms with the map */
+:root{
+  --bg:#151116; --bg2:#1D171F; --card:#1A151C;
+  --tx:#EAE6EB; --mu:#ABA5AD; --ln:rgba(234,230,235,0.14);
+  --p1:#F4C892; --p2:#DAB4EA;
+  --chalk:#EDEAE4; --red:#E8615A; --teal:#5FB7BC;
+  --body:"Atkinson Hyperlegible",system-ui,sans-serif;
+  --mono:"Overpass Mono",ui-monospace,monospace;
+  --hand:"Patrick Hand","Comic Sans MS",cursive;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 var(--body);overflow:hidden}
+#svg{position:fixed;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;
+  background-image:radial-gradient(circle,#231d25 1.4px,transparent 1.6px);background-size:30px 30px}
+#svg.pan{cursor:grabbing}
+#svg text{font-family:var(--hand)}
+.ln{stroke:var(--chalk);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ln.thin{stroke-width:2}
+.dash{stroke-dasharray:7 9}
+.redl{stroke:var(--red);fill:none;stroke-width:3;stroke-linecap:round}
+.ah{fill:none;stroke:var(--chalk);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.main{fill:var(--chalk);font-size:38px}
+.small{fill:var(--chalk);font-size:22px;letter-spacing:.06em}
+.redtx{fill:var(--red);font-size:24px;letter-spacing:.08em}
+.house-roof{fill:rgba(95,183,188,.55);stroke:var(--teal);stroke-width:2}
+.house-body{fill:rgba(95,183,188,.35);stroke:var(--teal);stroke-width:2}
+.house-tx{fill:var(--chalk);font-size:30px;letter-spacing:.06em}
+.hit{cursor:pointer}
+.hit:hover text,.hit.on text,.hit.hover text{fill:var(--p1)}
+.std.hover circle{fill:var(--p1);stroke:var(--p1)}
+.hit:focus{outline:none}
+.hit:focus-visible text{text-decoration:underline}
+.std text{font-size:26px;fill:var(--chalk)}
+.std .code{font-size:17px;fill:var(--mu);font-family:var(--mono)}
+.std circle{fill:none;stroke:var(--chalk);stroke-width:1.6}
+.std.on circle{fill:var(--p1);stroke:var(--p1)}
+body.rebuild .std:not(.shown){display:none}
+.link{fill:none;stroke:var(--p1);stroke-width:2.4;stroke-dasharray:6 8;stroke-linecap:round}
+
+#top{position:fixed;z-index:5;left:max(14px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 12px);
+  background:rgba(21,17,22,.92);border:1px solid var(--ln);border-radius:14px;padding:10px 16px;max-width:min(460px,calc(100vw - 28px))}
+#top b{display:block;font:24px/1.15 var(--hand);color:var(--chalk);font-weight:400}
+#top span{font-size:13px;color:var(--mu)}
+#bar{position:fixed;z-index:5;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  display:flex;flex-wrap:wrap;gap:4px;background:rgba(21,17,22,.92);border:1px solid var(--ln);border-radius:999px;padding:5px;max-width:calc(100vw - 28px)}
+#bar button{font:500 13px var(--mono);color:var(--tx);background:transparent;border:0;border-radius:999px;min-width:44px;height:44px;padding:0 14px;cursor:pointer}
+#bar button:hover{background:var(--ln)}
+#bar button[aria-pressed="true"]{color:var(--p2)}
+#bar button:focus-visible,.card button:focus-visible{outline:2px solid var(--p1);outline-offset:1px}
+#bar .sep{width:1px;background:var(--ln);margin:8px 2px}
+
+#cards{position:fixed;left:0;top:0;width:0;height:0;transform-origin:0 0;z-index:3;pointer-events:none}
+.card{position:absolute;width:720px;pointer-events:auto;background:var(--card);border:2px solid var(--chalk);border-radius:22px;
+  padding:14px 22px 20px;font:21px/1.45 var(--body);color:var(--tx);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.card.flash{animation:flash .6s ease}
+@keyframes flash{0%{border-color:var(--p1)}100%{border-color:var(--chalk)}}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:grab;margin:0 -8px 12px;padding:2px 0 8px 8px;border-bottom:1px dashed var(--ln)}
+.ch.drag{cursor:grabbing}
+.ch span{font:500 14px/1.3 var(--mono);color:var(--mu);letter-spacing:.03em}
+.ch button{font:24px/1 var(--body);color:var(--tx);background:transparent;border:1px solid var(--ln);border-radius:999px;width:42px;height:42px;cursor:pointer;flex:none}
+.mm{display:grid;grid-template-columns:178px minmax(0,1fr);gap:0 28px;align-items:center}
+.hub{font:31px/1.15 var(--hand);color:var(--chalk);text-align:center;border:2.5px solid var(--chalk);border-radius:18px;padding:14px 10px;position:relative}
+.hub small{display:block;font:500 14px/1.3 var(--mono);color:var(--mu);margin-top:6px}
+.hub::after{content:"";position:absolute;left:100%;top:50%;width:28px;border-top:2.5px solid var(--chalk)}
+.brs{border-left:2.5px solid var(--chalk);padding:2px 0 2px 22px;display:grid;gap:14px}
+.br{position:relative}
+.br::before{content:"";position:absolute;left:-22px;top:17px;width:15px;border-top:2.5px solid var(--chalk)}
+.br h5{font:28px/1.05 var(--hand);color:var(--chalk);margin:0 0 4px;font-weight:400}
+.br p{margin:0}
+.br ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.lb{font:500 13px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mu);margin:8px 0 3px}
+.chain .bad{font-style:italic}
+.chain .fix{color:var(--p1);font-weight:700}
+.chain .arw{font:20px/1 var(--hand);color:var(--mu);margin:2px 0 0 4px}
+.note{font-size:16px;color:var(--mu);margin-top:6px}
+.notes{margin-top:16px;padding-top:12px;border-top:1px dashed var(--ln)}
+.notes label{display:block;font:27px/1.1 var(--hand);color:var(--p2);margin-bottom:6px}
+.notes textarea{width:100%;min-height:96px;resize:vertical;font:19px/1.45 var(--body);color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:12px;padding:10px 12px}
+.notes textarea:focus{outline:2px solid var(--p2);outline-offset:1px}
+.notes .saved{display:block;font:500 12px/1.4 var(--mono);color:var(--mu);margin-top:5px}
+
+#sheet{display:none}
+@media (max-width:820px){
+  #top span{display:none}
+  #sheet{position:fixed;z-index:6;left:0;right:0;bottom:0;max-height:62vh;overflow:auto;background:var(--card);border-top:2px solid var(--chalk);border-radius:20px 20px 0 0;padding:6px 6px calc(env(safe-area-inset-bottom,0px) + 10px)}
+  #sheet.show{display:block}
+  #sheet .card{position:static;width:auto;border:0;box-shadow:none;padding:12px 10px 14px;font-size:16px}
+  #sheet .mm{grid-template-columns:1fr;gap:12px}
+  #sheet .hub::after{display:none}
+  #sheet .hub{font-size:26px}
+  #sheet .br h5{font-size:24px}
+  #sheet .notes textarea{font-size:16px}
+  body.sheet-open #bar{bottom:calc(62vh + 10px)}
+}
+@media (prefers-reduced-motion:reduce){.card.flash{animation:none}}
+</style>
+
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ethics mind map: a promise of honest service at an honest cost is delivered to the employer and the client, between the lines of the law and the Code, with transparency through presentation and records, all resting on trust in the system and the person.">
+  <defs>
+    <marker id="ah" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path class="ah" d="M1 1 L10 6 L1 11"/></marker>
+  </defs>
+  <g id="world">
+    <text class="main" x="82" y="200" text-anchor="middle" transform="rotate(-90 82 200)">Loyalty</text>
+    <path class="ln" d="M138 25 Q118 25 118 48 L118 178 Q118 192 104 192 Q118 192 118 206 L118 338 Q118 360 138 360"/>
+    <g class="hit hub" data-k="service" data-open="service" tabindex="0" role="button"><text class="main" x="400" y="210">Honest service</text></g>
+    <g class="hit hub" data-k="cost" data-open="cost" tabindex="0" role="button"><text class="main" x="400" y="352">Honest cost</text></g>
+    <path class="ln" d="M482 226 L482 314" marker-end="url(#ah)"/>
+    <path class="ln thin" d="M300 400 Q350 385 396 364" marker-end="url(#ah)"/>
+
+    <g class="hit hub" data-k="promise" data-open="promise" tabindex="0" role="button"><text class="main" x="660" y="266">Promise</text></g>
+    <path class="ln" d="M652 246 Q632 220 618 214" marker-end="url(#ah)"/>
+    <path class="ln" d="M660 284 Q636 320 606 342" marker-end="url(#ah)"/>
+
+    <path class="redl dash" d="M820 95 L1150 95"/>
+    <path class="redl" d="M780 175 L1180 175"/>
+    <path class="redl" d="M790 310 L1170 310"/>
+    <path class="redl dash" d="M830 400 L1150 400"/>
+    <g class="hit hub" data-k="c-esc" tabindex="0" role="button"><text class="small" x="1015" y="130" text-anchor="middle">OUT</text></g>
+    <g class="hit hub" data-k="c-esc" tabindex="0" role="button"><text class="small" x="985" y="355" text-anchor="middle">OUT / STOP / DISSOCIATE</text></g>
+    <g class="hit hub" data-k="c-esc" tabindex="0" role="button"><text class="redtx" x="980" y="440" text-anchor="middle">REPORT</text></g>
+    <path class="ln" d="M786 268 C820 292 850 190 880 200 C905 208 915 300 935 292 C962 282 985 196 1015 205 C1040 214 1046 252 1066 246 C1096 238 1120 214 1160 216" marker-end="url(#ah)"/>
+    <path class="ln thin dash" d="M1002 202 L1016 146 L1030 206"/>
+    <path class="ln thin dash" d="M1056 250 L1064 332 L1074 248"/>
+
+    <g class="hit hub" data-k="delivery" data-open="delivery" tabindex="0" role="button"><text class="main" x="1176" y="232">Delivery</text></g>
+    <path class="ln" d="M1302 200 Q1336 166 1372 152" marker-end="url(#ah)"/>
+    <path class="ln" d="M1302 242 Q1336 272 1372 286" marker-end="url(#ah)"/>
+    <g class="hit hub" data-k="employer" data-open="employer" tabindex="0" role="button"><text class="main" x="1385" y="146">Employer</text></g>
+    <g class="hit hub" data-k="client" data-open="client" tabindex="0" role="button"><text class="main" x="1385" y="306">Client</text></g>
+
+    <path class="ln" d="M1700 110 Q1722 110 1722 132 L1722 210 Q1722 224 1738 224 Q1722 224 1722 238 L1722 310 Q1722 332 1700 332"/>
+    <g class="hit hub" data-k="transparency" data-open="transparency" tabindex="0" role="button"><text class="main" x="1754" y="238">Transparency</text></g>
+    <path class="ln" d="M2030 224 L1972 230" marker-end="url(#ah)"/>
+    <path class="ln" d="M2030 284 L1972 246" marker-end="url(#ah)"/>
+
+    <path class="ln" d="M676 292 C656 432 760 540 892 550" marker-end="url(#ah)"/>
+    <path class="ln" d="M1212 254 C1226 412 1172 532 1068 550" marker-end="url(#ah)"/>
+    <g class="hit hub" data-k="trust" data-open="trust" tabindex="0" role="button">
+      <polygon class="house-roof" points="884,508 980,458 1076,508"/>
+      <rect class="house-body" x="906" y="508" width="148" height="70"/>
+      <text class="house-tx" x="980" y="555" text-anchor="middle">TRUST</text>
+    </g>
+    <text class="small" x="1092" y="566">GLASS PRISON</text>
+    <path class="ln" d="M940 580 L884 616" marker-end="url(#ah)"/>
+    <path class="ln" d="M1020 580 L1076 616" marker-end="url(#ah)"/>
+    <g class="hit hub" data-k="system" data-open="system" tabindex="0" role="button"><text class="main" x="800" y="646">System</text></g>
+    <g class="hit hub" data-k="person" data-open="person" tabindex="0" role="button"><text class="main" x="1080" y="646">Person</text></g>
+
+    <g id="stds"></g>
+    <g id="links"></g>
+  </g>
+</svg>
+
+<div id="cards"></div>
+<div id="sheet" aria-live="polite"></div>
+
+<div id="top"><b>The ethics mind map</b><span>Click any node to open it. Drag to move around. Pinch or Ctrl + scroll to zoom. Principles are paraphrased, not quoted from the curriculum.</span></div>
+<div id="bar">
+  <button id="zo" type="button" aria-label="Zoom out">&minus;</button>
+  <button id="zi" type="button" aria-label="Zoom in">+</button>
+  <button id="fit" type="button">Fit</button>
+  <span class="sep"></span>
+  <button id="all" type="button">Open all</button>
+  <button id="hide" type="button" aria-pressed="false">Hide standards</button>
+</div>
+
+<script type="application/json" id="mapdata">
+{
+"promise":{"name":"Promise","where":"The start of every relationship",
+ "principle":"Every client relationship starts with a promise: an honest service, at an honest cost. Most of ethics is checking whether both halves were kept.",
+ "examples":["A manager picks well-researched stocks but hides the commissions she earns. She has kept half the promise.","Savers hand over their money because they have the least information in the market. The promise is what makes that safe."],
+ "looks":"Each duty is its own rule to memorise: suitability here, diligence there, fees somewhere else.",
+ "leads":"You can't tell which rule a question is testing, so you pick whichever option sounds true.",
+ "correct":"Ask what was promised. A problem with the work itself belongs under honest service. A hidden price belongs under honest cost."},
+"service":{"name":"Honest service","where":"Promise → Honest service",
+ "principle":"The work has to be good for this client in every way at once: researched, sound, a fit, and described truthfully. Two out of three fails.",
+ "examples":["Well researched and objectively sound, but sold to the wrong client. One leg is missing, so it fails.","Confidence should be the outcome of a process. If you can't show the process, the confidence is borrowed."],
+ "looks":"Good research means good service.",
+ "leads":"A brilliant idea gets approved for a client it doesn't fit.",
+ "correct":"Service is honest only when the research, the fit and the way you describe it all hold together."},
+"cost":{"name":"Honest cost","where":"Promise → Honest cost",
+ "principle":"Anything that pays you, or lets you go first, is part of the price the client pays. The client has to be able to see it.",
+ "examples":["Trading for yourself before your clients. They trade 'eventually', but you went first.","An analyst rating a company that pays her firm banking fees."],
+ "looks":"If the client isn't charged anything extra, there's no cost to disclose.",
+ "leads":"Hidden incentives quietly steer the advice.",
+ "correct":"A cost is anything that could pull your judgment toward yourself. Disclose it, and put clients first."},
+"c-esc":{"name":"Out, stop, dissociate, report","code":"under I(A)","where":"The red bands around delivery",
+ "principle":"Delivery has to stay between two lines, the law and the Code. Cross a line and you stop and step away. If it's serious, it gets reported.",
+ "examples":["Your team's report has a figure you know is false. You raise it, and if it isn't fixed, your name comes off the report.","Whistleblowing follows your own country's law. The Code expects you to step away. It doesn't make you the regulator."],
+ "looks":"If you spot a violation, you call the regulator.",
+ "leads":"You skip the first duty, which is to stop taking part, or you freeze because reporting feels too big.",
+ "correct":"First stop and dissociate, then raise it inside the firm. Reporting outside is encouraged, and the law may require it."},
+"delivery":{"name":"Delivery","where":"Promise → Delivery",
+ "principle":"Delivery runs to two parties at once, the client and the employer, and each is owed something different. Ask whose trust the act puts at risk.",
+ "examples":["Taking a bonus from a client without telling your employer. The client is happy. The employer is the one let down.","Telling a colleague about a client's divorce for no reason. The firm gains nothing. The client is the one let down."],
+ "looks":"Do right by the client and the employer will be fine, or the other way round.",
+ "leads":"You miss the violation against whichever party you weren't thinking about.",
+ "correct":"Check both arrows: what the client is owed, and what the employer is owed."},
+"employer":{"name":"Employer","where":"Delivery → Employer",
+ "principle":"The employer is owed your loyalty while you work there, a clear view of anything that competes with it, and a working system if you supervise others.",
+ "examples":["Preparing your own firm's paperwork at night is fine. Taking the client list on your way out isn't.","You're part of a network. Clearing outside pay with your employer lets them see your judgment isn't compromised."],
+ "looks":"My own time is my own business.",
+ "leads":"Side deals and exits that quietly damage the firm.",
+ "correct":"Your own time is yours until it uses the firm's clients, information or interest. From then on, it needs consent."},
+"client":{"name":"Client","where":"Delivery → Client",
+ "principle":"Every client gets a fair shot, and keeps their information private. Fair doesn't mean identical.",
+ "examples":["New-issue shares shared out by account size. Fair only if every eligible client heard about the offer.","Premium service tiers, disclosed and open to anyone who pays for them."],
+ "looks":"Fair means everyone gets exactly the same.",
+ "leads":"You flag harmless tiers as violations, or miss a head start given to favourites.",
+ "correct":"Fair means no one is systematically ahead, and everyone had the same chance to ask."},
+"transparency":{"name":"Transparency","where":"Covers both the employer and the client",
+ "principle":"The client and the employer both have to be able to see what happened: how you performed, and why you decided what you did.",
+ "examples":["The brain is meant to think, not to remember. The record does the remembering.","Showing your three best years out of ten is true, and still hides the picture."],
+ "looks":"Accurate numbers and a good memory are enough.",
+ "leads":"Cherry-picked results, and decisions you can't defend later.",
+ "correct":"Show the whole picture, label anything simulated, and keep the record that proves your reasoning."},
+"trust":{"name":"Trust: the glass prison","where":"What everything rests on",
+ "principle":"Everyone works inside a glass prison, where the whole market can see in. The promise and its delivery both build trust in the system and in the person. Any act that cracks either one is a violation.",
+ "examples":["You and the market have a deal: everyone trades on the same information. Breaking it cracks the glass.","Claiming the charter guarantees returns cracks trust in the designation, not just in you."],
+ "looks":"Ethics is about not hurting your own client.",
+ "leads":"You miss violations that hurt no client at all, like exam leaks or personal fraud.",
+ "correct":"Ask whether the act would make outsiders trust the market, or the profession, less."},
+"system":{"name":"System","where":"Trust → System",
+ "principle":"The system is the market and the exam: shared things that only work while nobody games them.",
+ "examples":["A market rumour that arrives by SMS is noise, not inside information.","A block deal moves the price, but it's real buying, so nobody is fooled."],
+ "looks":"If I have an edge, I've cheated the system.",
+ "leads":"Normal skill and big trades get flagged as violations.",
+ "correct":"Gaming the system means faking what it runs on: the information, the price, or the exam's fairness."},
+"person":{"name":"Person","where":"Trust → Person",
+ "principle":"The person is you as a professional. What you say about yourself, and how you behave, reflects on everyone with the same letters.",
+ "examples":["Going bankrupt isn't dishonest. Faking your tax return is.","Passing Level III doesn't make you a charterholder. Experience and membership complete it."],
+ "looks":"My private life isn't the profession's business.",
+ "leads":"You miss personal dishonesty that still counts, or flag private trouble that doesn't.",
+ "correct":"Ask whether the act shows dishonesty, or misstates your credentials. That's the line."},
+"III(C)":{"name":"Suitability",
+ "principle":"A sound idea is only right for a client if it fits their risk, their timeline and their need for cash, judged across the whole portfolio.",
+ "examples":["A superb biotech pick, sold to a retiree who needs the money to live on.","A 2% hedge with a clear job in the portfolio fits. The job is what makes it fit, not the small size."],
+ "looks":"Well researched means suitable.",
+ "leads":"Good ideas end up in the wrong portfolios.",
+ "correct":"Suitability is a separate test from research. The same security can be right for one client and wrong for another."},
+"III(A)":{"name":"Loyalty, prudence and care",
+ "principle":"Clients are the savers, the people with the least information in the market. Act in their interest, explain the risks, and follow their wishes once they understand. The investment policy statement (IPS) is the agreement between you.",
+ "examples":["A client with a moderate-risk IPS asks for 80% in one speculative stock. Raise the conflict and write it down. Don't just carry it out.","Commissions are the client's money, so any research they pay for has to serve that client."],
+ "looks":"Loyalty means doing exactly what the client says.",
+ "leads":"You carry out instructions that break the client's own plan.",
+ "correct":"Loyalty is acting in their interest with a prudent professional's care, inside the IPS."},
+"V(A)":{"name":"Diligence and reasonable basis",
+ "principle":"Confidence should be the outcome of a process. Before you recommend something, you need your own reason to believe it.",
+ "examples":["Passing on a famous firm's buy call without checking how it was reached.","Honesty and diligence are different things. You can honestly pass on a view you never checked."],
+ "looks":"If I'm honest about it, I've been diligent.",
+ "leads":"Borrowed confidence, where reputation stands in for research.",
+ "correct":"Diligence is about the basis, not the honesty. Be able to show the work behind the view."},
+"V(B)":{"name":"Communication with clients",
+ "principle":"Decisions are judged before the outcome is known. Presenting an opinion as a fact bends the client's reasoning, even if the opinion turns out right.",
+ "examples":["'This stock will beat the market by 15% next year', said as a fact.","Past returns don't promise future ones. Say how your process works and where it can fail."],
+ "looks":"If it came true, it wasn't misleading.",
+ "leads":"Outcomes become the judge, so lucky calls look honest.",
+ "correct":"Judge the statement at the moment it was made: was fact kept apart from opinion?"},
+"I(C)":{"name":"Misrepresentation",
+ "principle":"There's no 'overall message' defence. Every risk and every benefit you present has to be right.",
+ "examples":["'Guaranteed 8% a year' on an equity fund.","Presenting another analyst's work as your own."],
+ "looks":"If the big picture is true, small slips don't matter.",
+ "leads":"Small false promises, like guarantees, slip through.",
+ "correct":"Any false or misleading statement counts, however small, including guarantees and borrowed work."},
+"I(B)":{"name":"Independence and objectivity",
+ "principle":"Objectivity is fragile. Anything that makes you want to please someone, even with no deal attached, can bend your judgment.",
+ "examples":["An airline flies an analyst business class to a resort for its 'investor day'.","Pressure from your own firm to keep a rating friendly."],
+ "looks":"No bribe, no problem.",
+ "leads":"You accept perks that quietly tilt your next call.",
+ "correct":"Small courtesies are fine. Anything that could reasonably sway you isn't. Pay your own way where you can."},
+"I(E)":{"name":"Competence","note":"Not yet worked through in the live session. Written from the standard.",
+ "principle":"Only take on work you can actually do well, and keep your skills current. Wanting to help isn't the same as being able to.",
+ "examples":["Taking on a derivatives mandate after a weekend of reading.","Keeping up with a sector's changes before you cover it."],
+ "looks":"If I've read about it, I'm competent.",
+ "leads":"You take on work you can't do well.",
+ "correct":"Competence means being able to do this job well now, not having studied it once."},
+"VI(B)":{"name":"Priority of transactions",
+ "principle":"'Eventually' is the problem. Clients trade first, the employer next, and you last, if at all.",
+ "examples":["Buying for yourself before entering the clients' order, even if every order fills the same day.","Holding back a good idea until your own position is in."],
+ "looks":"As long as clients get to trade, the order doesn't matter.",
+ "leads":"Front-running that looks harmless.",
+ "correct":"The order is the whole rule. You go last."},
+"c-soft":{"name":"Soft dollars","code":"under III(A)",
+ "principle":"Commissions are the client's money, so whatever they buy has to help the client.",
+ "examples":["A research database paid for with client commissions is fine.","The manager's office or travel paid for with them isn't."],
+ "looks":"Research bought with commissions is free.",
+ "leads":"Client money pays the manager's bills.",
+ "correct":"Use it only for research that helps that client, and tell clients how it's used."},
+"VI(A)":{"name":"Disclosure of conflicts",
+ "principle":"Incentives matter. Even pressure you resist widens your margin of error, so the client has to know it's there.",
+ "examples":["Analysts rating companies that pay their firms banking fees.","A deal built with input from someone betting against it, sold without saying so."],
+ "looks":"If my research is honest, there's nothing to disclose.",
+ "leads":"Readers trust advice without knowing what's pulling on it.",
+ "correct":"Disclose anything that could reasonably affect your objectivity. It doesn't have to have changed anything."},
+"VI(C)":{"name":"Referral fees",
+ "principle":"If you're paid to send someone somewhere, the person being sent has to know.",
+ "examples":["An adviser paid by a fund company for steering clients into its funds.","A non-cash perk for referrals counts too."],
+ "looks":"If the client isn't charged extra, there's no issue.",
+ "leads":"Recommendations quietly follow the referral money.",
+ "correct":"Disclose any benefit for a referral, cash or not, to the client and the employer before they decide."},
+"c-nature":{"name":"Nature and limits of service","code":"under V(B)",
+ "principle":"Clients should know how your process works and where it can break, so they can judge what they're buying.",
+ "examples":["A quant fund tells clients its model was built on calm markets and may fail in a crisis.","Telling clients promptly when the process changes."],
+ "looks":"Once they've signed, the process is our business.",
+ "leads":"Clients can't judge the risk they're taking.",
+ "correct":"Explain the process, its main limits and its risks, and update clients when any of that changes."},
+"I(A)":{"name":"Knowledge of the law","where":"The red lines around delivery",
+ "principle":"First work out which system's rules apply. If that law bans the act, obey the law. If it's silent or looser, the Code sets the floor.",
+ "examples":["Your home country is silent, the client's country bans the act, and the Code says nothing. It's banned, and there was never a conflict.","You don't go to jail for the Code. Where the law forbids something, the law wins."],
+ "looks":"Always follow the stricter rule, as the first step.",
+ "leads":"You compare rules before knowing which ones apply.",
+ "correct":"Ask which rules apply. If the law bans it, obey the law. If the law is silent or looser, follow the Code."},
+"IV(A)":{"name":"Loyalty to employer",
+ "principle":"Your own time is yours until it uses the firm's clients, information or interest.",
+ "examples":["Preparing your own firm's paperwork at night is fine.","Emailing yourself the client list before you leave isn't."],
+ "looks":"My own time, my own business.",
+ "leads":"You compete with your employer without its consent.",
+ "correct":"Don't harm the employer. Side work that competes needs consent. Getting ready to leave is fine."},
+"IV(B)":{"name":"Additional compensation",
+ "principle":"You're part of a network. Outside pay tied to your work has to be cleared with your employer, in writing, first.",
+ "examples":["A client offers you a holiday if the portfolio beats its benchmark.","A paid board seat taken on alongside your job."],
+ "looks":"A client's bonus is between me and the client.",
+ "leads":"Your loyalty splits without the employer knowing.",
+ "correct":"Get written consent from your employer before you accept."},
+"IV(C)":{"name":"Responsibilities of supervisors",
+ "principle":"Supervising is a different contract. You answer for preventing and catching your team's violations, not just for your own conduct.",
+ "examples":["Your analyst front-runs clients, and the firm has no pre-clearance for personal trades.","If the firm's system isn't adequate, decline the supervisor role in writing."],
+ "looks":"I didn't break a rule, so I'm clear.",
+ "leads":"Supervisors watch violations happen around them.",
+ "correct":"Make reasonable efforts to prevent and detect violations, with a system that actually works."},
+"III(B)":{"name":"Fair dealing",
+ "principle":"Fair isn't equal. No client should be systematically ahead, and everyone needs the same chance to ask.",
+ "examples":["Sharing out shares by account size works only if every eligible client heard about the offer.","Premium tiers are fine when they're disclosed and open to all."],
+ "looks":"Fair means identical, or everyone hears eventually, so timing doesn't matter.",
+ "leads":"Favourites get a quiet head start.",
+ "correct":"No systematic advantage in information or allocation. Different service levels are fine if disclosed."},
+"III(E)":{"name":"Confidentiality",
+ "principle":"A client's information belongs to the client. Share it only when the law makes you, when it's about their illegal activity, or when they agree.",
+ "examples":["A court order: you share.","A journalist, or an informal request with no legal basis: you don't."],
+ "looks":"If any authority asks, I hand it over.",
+ "leads":"Client information leaks to whoever sounds official.",
+ "correct":"Only the narrow exceptions count. 'Someone important asked' isn't one of them."},
+"III(D)":{"name":"Performance presentation",
+ "principle":"Technically accurate isn't enough. The numbers have to show the real picture.",
+ "examples":["Showing your three best years out of ten.","Backtested results are allowed, but only when clearly labelled as simulated."],
+ "looks":"If every number is true, I'm fine. Or the opposite mistake: simulated results are banned.",
+ "leads":"Cherry-picked records pass, and honestly labelled models get flagged.",
+ "correct":"Fair, accurate and complete. Simulations are fine when they're labelled."},
+"V(C)":{"name":"Record retention",
+ "principle":"The brain is meant to think, not to remember. The record is your proof that you had a reasonable basis.",
+ "examples":["Challenged a year later, your memory isn't evidence. Your notes are.","When you leave, the records stay, because they're the firm's."],
+ "looks":"I remember why I did it, so I don't need notes.",
+ "leads":"You can't defend a decision that was sound.",
+ "correct":"Keep records that support every recommendation and action."},
+"II(A)":{"name":"Material nonpublic information",
+ "principle":"You and the market have a deal: everyone trades on the same information. Information is off-limits only if it's both material and not yet public.",
+ "examples":["A market rumour that arrives by SMS is noise. It isn't material, so it isn't off-limits.","Three ex-employees' hallway impressions plus public filings make a mosaic, and acting on it is legal."],
+ "looks":"Knowing something others don't means I can't trade.",
+ "leads":"You flag normal analysis, or invent a duty to check with the company first.",
+ "correct":"It takes both tests, material and nonpublic. The fix is getting the company to disclose."},
+"II(B)":{"name":"Market manipulation",
+ "principle":"What matters is intent: are you trying to fake the price or the volume? Moving the market isn't the test.",
+ "examples":["Block deals move the market, but they're real buying and selling.","Your buying is information the market has no right to see in advance. Supporting liquidity is fine when it's disclosed, because nobody is fooled."],
+ "looks":"Big trades that move the price are manipulation.",
+ "leads":"Normal execution gets flagged.",
+ "correct":"Look for intent to deceive, through trades or through false information."},
+"VII(A)":{"name":"Conduct in the CFA program",
+ "principle":"The exam only works while it stays secret. Not cheating isn't enough. You also can't talk about what was on it.",
+ "examples":["Telling a friend which topics came up.","Saying the exam was long or hard is fine."],
+ "looks":"If I didn't cheat, I'm fine.",
+ "leads":"Chatter after the exam leaks the questions.",
+ "correct":"Anything that weakens the exam's security counts, before or after the exam."},
+"I(D)":{"name":"Misconduct",
+ "principle":"Misconduct is about honesty, not about whether markets are involved.",
+ "examples":["Going bankrupt isn't morally wrong, and on its own it isn't misconduct.","Faking your personal tax return is, even though no market is touched."],
+ "looks":"Only acts that touch markets count. Or the opposite mistake: any legal trouble counts.",
+ "leads":"You miss personal dishonesty, or flag honest misfortune.",
+ "correct":"Dishonesty, fraud or deceit, or anything that undermines your professional integrity."},
+"VII(B)":{"name":"Reference to the designation",
+ "principle":"Represent the designation correctly. Don't claim the charter before you've finished the process, and never say it promises returns.",
+ "examples":["Calling yourself a charterholder after passing Level III.","Telling clients the charter means better returns."],
+ "looks":"Passing all three exams makes you a charterholder, and the charter shows stock-picking skill.",
+ "leads":"Overpromising on the letters.",
+ "correct":"The charter takes exams, experience and membership. It shows competence and ethics, not performance."}
+}
+</script>
+
+<script>
+(function(){
+const DATA = JSON.parse(document.getElementById("mapdata").textContent);
+const WHERE = {service:"Promise → Honest service", cost:"Promise → Honest cost", lines:"The red lines around delivery", employer:"Delivery → Employer", client:"Delivery → Client", transparency:"Transparency", system:"Trust → System", person:"Trust → Person"};
+const LAYOUT = [
+  ["III(C)","Suitability",175,48,"service"],["III(A)","Loyalty",175,78,"service"],["V(A)","Diligence",175,108,"service"],["V(B)","Comms",175,138,"service"],["I(C)","Misrep",175,168,"service"],["I(B)","Independence",175,198,"service"],["I(E)","Competence",175,228,"service"],
+  ["VI(B)","Priority of transactions",175,416,"cost"],["c-soft","Soft dollars",175,448,"cost"],["VI(A)","Conflicts of interest",175,480,"cost"],["VI(C)","Referral fees",175,512,"cost"],["c-nature","Nature and limits of service",175,544,"cost"],
+  ["I(A)","the lines = law + Code",730,162,"lines"],
+  ["IV(A)","Loyalty to employer",1400,40,"employer"],["IV(B)","Extra compensation",1400,70,"employer"],["IV(C)","Supervisors",1400,100,"employer"],
+  ["III(B)","Fair dealing",1400,346,"client"],["III(E)","Confidentiality",1400,376,"client"],
+  ["III(D)","Presentation",2046,232,"transparency"],["V(C)","Record retention",2046,292,"transparency"],
+  ["II(A)","Inside information",760,686,"system"],["II(B)","Manipulation",760,716,"system"],["VII(A)","The CFA exam",760,746,"system"],
+  ["I(D)","Misconduct",1090,686,"person"],["VII(B)","The designation",1090,716,"person"]
+];
+const OPEN = {promise:["service","cost"], delivery:["employer","client","lines"], trust:["system","person"], service:["service"], cost:["cost"], employer:["employer"], client:["client"], transparency:["transparency"], system:["system"], person:["person"]};
+const ORDER = ["promise","service","III(C)","III(A)","V(A)","V(B)","I(C)","I(B)","I(E)","cost","VI(B)","c-soft","VI(A)","VI(C)","c-nature",
+  "I(A)","c-esc","delivery","employer","IV(A)","IV(B)","IV(C)","client","III(B)","III(E)","transparency","III(D)","V(C)",
+  "trust","system","II(A)","II(B)","VII(A)","person","I(D)","VII(B)"];
+const MAP = {x:40, y:0, w:2300, h:770};
+const CW = 720, NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("svg"), world = document.getElementById("world"), layer = document.getElementById("stds"),
+      links = document.getElementById("links"), cardsEl = document.getElementById("cards"), sheet = document.getElementById("sheet");
+const open = new Map();     // key -> {el, x, y, anchor, link}
+let S = 1, TX = 0, TY = 0, top = 10, allOpen = false;
+const narrow = () => matchMedia("(max-width:820px)").matches;
+
+function svgEl(tag, attrs, text){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; }
+function h(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function activate(g, fn){ g.addEventListener("click", fn); g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fn(); } }); g.addEventListener("pointerdown", e => e.stopPropagation()); }
+
+/* ---------- the map's standards ---------- */
+LAYOUT.forEach(([key, label, x, y, grp]) => {
+  const d = DATA[key]; d.grp = grp;
+  const g = svgEl("g", {class:"std hit", tabindex:"0", role:"button", "aria-label":`${label}: open its card`, "data-grp":grp, "data-k":key});
+  g.appendChild(svgEl("circle", {cx:x-14, cy:y-8, r:6}));
+  const t = svgEl("text", {x, y});
+  t.appendChild(svgEl("tspan", {}, label));
+  t.appendChild(svgEl("tspan", {class:"code", dx:"10"}, key.startsWith("c-") ? d.code : key));
+  g.appendChild(t);
+  layer.appendChild(g);
+  activate(g, () => openCard(key, g));
+});
+world.querySelectorAll(":scope > .hub").forEach(g => activate(g, () => {
+  (OPEN[g.dataset.open] || []).forEach(grp => layer.querySelectorAll(`.std[data-grp="${grp}"]`).forEach(n => n.classList.add("shown")));
+  openCard(g.dataset.k, g);
+}));
+function anchorOf(key){ return layer.querySelector(`[data-k="${CSS.escape(key)}"]`) || world.querySelector(`.hub[data-k="${CSS.escape(key)}"]`); }
+
+/* ---------- a card: a small mind map of its own ---------- */
+function buildCard(key){
+  const d = DATA[key];
+  const card = h("article", "card"); card.dataset.k = key;
+  const head = h("div", "ch");
+  head.appendChild(h("span", null, d.where || WHERE[d.grp] || ""));
+  const x = h("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", "Close " + d.name);
+  x.addEventListener("click", () => closeCard(key));
+  head.appendChild(x);
+  card.appendChild(head);
+
+  const mm = h("div", "mm");
+  const hub = h("div", "hub", d.name);
+  const isStd = !(key in OPEN) && key !== "c-esc";
+  if (isStd || d.code) hub.appendChild(h("small", null, key.startsWith("c-") ? d.code : key));
+  const brs = h("div", "brs");
+
+  const pr = h("div", "br"); pr.appendChild(h("h5", null, "The principle")); pr.appendChild(h("p", null, d.principle));
+  if (d.note) pr.appendChild(h("p", "note", d.note));
+  const ex = h("div", "br"); ex.appendChild(h("h5", null, "Examples"));
+  const ul = h("ul"); d.examples.forEach(t => ul.appendChild(h("li", null, t))); ex.appendChild(ul);
+  const iso = h("div", "br"); iso.appendChild(h("h5", null, "Learned in isolation"));
+  const chain = h("div", "chain");
+  [["What it looks like","bad",d.looks],["What it leads to","",d.leads],["The right reading","fix",d.correct]].forEach(([lb, c, t], i) => {
+    if (i) chain.appendChild(h("div", "arw", "↓"));
+    chain.appendChild(h("div", "lb", lb)); chain.appendChild(h("p", c, t));
+  });
+  iso.appendChild(chain);
+  brs.append(pr, ex, iso);
+  mm.append(hub, brs);
+  card.appendChild(mm);
+
+  const notes = h("div", "notes");
+  const id = "notes-" + key.replace(/[^a-z0-9]/gi, "_");
+  const lab = h("label", null, "Own notes"); lab.htmlFor = id;
+  const ta = h("textarea"); ta.id = id; ta.placeholder = "Your own words, your own example, a question to come back to…";
+  const saved = h("span", "saved", "Saved in this browser only.");
+  const sk = "ethics-map-notes:" + key;
+  try { ta.value = localStorage.getItem(sk) || ""; } catch (e) { saved.textContent = "Notes can't be saved in this browser."; }
+  let t0; ta.addEventListener("input", () => { clearTimeout(t0); t0 = setTimeout(() => { try { localStorage.setItem(sk, ta.value); saved.textContent = "Saved in this browser only."; } catch (e) { saved.textContent = "Notes can't be saved in this browser."; } }, 300); });
+  notes.append(lab, ta, saved);
+  card.appendChild(notes);
+
+  card.addEventListener("pointerdown", e => { e.stopPropagation(); front(card); });
+  card.addEventListener("mouseenter", () => mark(key, true));
+  card.addEventListener("mouseleave", () => mark(key, false));
+  dragBy(head, key);
+  return card;
+}
+function front(card){ card.style.zIndex = ++top; }
+function mark(key, on){ document.querySelectorAll(`#world [data-k="${CSS.escape(key)}"]`).forEach(n => n.classList.toggle("hover", on)); }
+function syncOn(){
+  document.querySelectorAll("#world .hit").forEach(n => n.classList.toggle("on", open.has(n.dataset.k)));
+}
+
+function openCard(key, anchorEl){
+  if (!DATA[key]) return;
+  if (narrow()){
+    sheet.replaceChildren(buildCard(key)); sheet.classList.add("show"); document.body.classList.add("sheet-open");
+    sheet.querySelector(".ch button").onclick = () => { sheet.classList.remove("show"); document.body.classList.remove("sheet-open"); };
+    sheet.scrollTop = 0; return;
+  }
+  const have = open.get(key);
+  if (have){ front(have.el); have.el.classList.remove("flash"); void have.el.offsetWidth; have.el.classList.add("flash"); return; }
+  const anc = anchorEl || anchorOf(key), a = anc.getBBox();
+  const right = a.x + a.width + 60 + CW < MAP.x + MAP.w + 520;
+  const x = right ? a.x + a.width + 60 : a.x - CW - 60, y = a.y - 30;
+  place(key, x, y, true, anc);
+  syncOn();
+  const c = open.get(key);
+  if (!inView(c)) panTo(c);
+}
+function place(key, x, y, linked, anc){
+  const el = buildCard(key);
+  el.style.left = x + "px"; el.style.top = y + "px";
+  cardsEl.appendChild(el); front(el);
+  const rec = {el, x, y, link:null, anchor:anc || anchorOf(key)};
+  if (linked){ rec.link = svgEl("path", {class:"link"}); links.appendChild(rec.link); }
+  open.set(key, rec); drawLink(key);
+}
+function closeCard(key){
+  const r = open.get(key); if (!r) return;
+  r.el.remove(); if (r.link) r.link.remove(); open.delete(key); syncOn(); mark(key, false);
+  if (!open.size) setAll(false);
+}
+function closeAll(){ [...open.keys()].forEach(closeCard); }
+function drawLink(key){
+  const r = open.get(key); if (!r || !r.link) return;
+  const a = r.anchor.getBBox(), cy = r.y + 46, cardRight = r.x > a.x;
+  const sx = cardRight ? a.x + a.width + 8 : a.x - 8, sy = a.y + a.height/2, ex = cardRight ? r.x : r.x + CW;
+  const mx = (sx + ex)/2;
+  r.link.setAttribute("d", `M${sx},${sy} C${mx},${sy} ${mx},${cy} ${ex},${cy}`);
+}
+
+/* ---------- drag a card by its top strip ---------- */
+function dragBy(handle, key){
+  handle.addEventListener("pointerdown", e => {
+    if (e.target.closest("button")) return;
+    const r = open.get(key); if (!r) return;
+    e.preventDefault(); handle.setPointerCapture(e.pointerId); handle.classList.add("drag");
+    let lx = e.clientX, ly = e.clientY;
+    const move = ev => { r.x += (ev.clientX - lx)/S; r.y += (ev.clientY - ly)/S; lx = ev.clientX; ly = ev.clientY;
+      r.el.style.left = r.x + "px"; r.el.style.top = r.y + "px"; drawLink(key); };
+    const end = () => { handle.classList.remove("drag"); handle.removeEventListener("pointermove", move); handle.removeEventListener("pointerup", end); handle.removeEventListener("pointercancel", end); };
+    handle.addEventListener("pointermove", move); handle.addEventListener("pointerup", end); handle.addEventListener("pointercancel", end);
+  });
+}
+
+/* ---------- open all: every card, laid out below the map ---------- */
+function setAll(on){ allOpen = on; document.getElementById("all").textContent = on ? "Close all" : "Open all"; }
+function openAll(){
+  closeAll();
+  const cols = 8, gap = 60, colY = Array(cols).fill(MAP.y + MAP.h + 160);
+  const x0 = MAP.x + MAP.w/2 - (cols*(CW + gap) - gap)/2;
+  ORDER.forEach((key, i) => {
+    let c = 0; for (let j = 1; j < cols; j++) if (colY[j] < colY[c] - 1) c = j;
+    const x = x0 + c*(CW + gap);
+    place(key, x, colY[c], false);
+    colY[c] += open.get(key).el.offsetHeight + gap;
+  });
+  syncOn(); setAll(true); fitTo(bounds());
+}
+
+/* ---------- camera ---------- */
+function apply(){
+  world.setAttribute("transform", `translate(${TX},${TY}) scale(${S})`);
+  cardsEl.style.transform = `translate(${TX}px,${TY}px) scale(${S})`;
+  svg.style.backgroundSize = `${30*S}px ${30*S}px`; svg.style.backgroundPosition = `${TX}px ${TY}px`;
+}
+function bounds(){
+  let x0 = MAP.x, y0 = MAP.y, x1 = MAP.x + MAP.w, y1 = MAP.y + MAP.h;
+  open.forEach(r => { x0 = Math.min(x0, r.x); y0 = Math.min(y0, r.y); x1 = Math.max(x1, r.x + CW); y1 = Math.max(y1, r.y + r.el.offsetHeight); });
+  return {x:x0, y:y0, w:x1 - x0, h:y1 - y0};
+}
+function fitTo(b){
+  const padTop = 96, padBot = 90, w = innerWidth - 40, hh = innerHeight - padTop - padBot;
+  S = Math.min(w/b.w, hh/b.h, 1.4);
+  TX = 20 + (w - b.w*S)/2 - b.x*S; TY = padTop + (hh - b.h*S)/2 - b.y*S; apply();
+}
+function inView(r){ const x = r.x*S + TX, y = r.y*S + TY; return x > 0 && y > 60 && x + CW*S < innerWidth && y + 200*S < innerHeight; }
+function panTo(r){ TX = innerWidth/2 - (r.x + CW/2)*S; TY = Math.min(110, innerHeight/2 - (r.y + r.el.offsetHeight/2)*S); apply(); }
+function zoomAt(f, cx, cy){ const ns = Math.max(.08, Math.min(2.5, S*f)); f = ns/S; TX = cx - (cx - TX)*f; TY = cy - (cy - TY)*f; S = ns; apply(); }
+
+const ptr = new Map();
+svg.addEventListener("pointerdown", e => { svg.setPointerCapture(e.pointerId); ptr.set(e.pointerId, {x:e.clientX, y:e.clientY}); svg.classList.add("pan"); });
+svg.addEventListener("pointermove", e => {
+  const p = ptr.get(e.pointerId); if (!p) return;
+  if (ptr.size === 2){
+    const [a, b] = [...ptr.values()], d0 = Math.hypot(a.x - b.x, a.y - b.y);
+    p.x = e.clientX; p.y = e.clientY;
+    const [c, d] = [...ptr.values()], d1 = Math.hypot(c.x - d.x, c.y - d.y);
+    if (d0 > 0) zoomAt(d1/d0, (c.x + d.x)/2, (c.y + d.y)/2);
+  } else { TX += e.clientX - p.x; TY += e.clientY - p.y; p.x = e.clientX; p.y = e.clientY; apply(); }
+});
+const up = e => { ptr.delete(e.pointerId); if (!ptr.size) svg.classList.remove("pan"); };
+svg.addEventListener("pointerup", up); svg.addEventListener("pointercancel", up);
+addEventListener("wheel", e => {
+  if (e.target.closest("textarea, #sheet, #bar, #top")) return;
+  e.preventDefault();
+  if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY*.01), e.clientX, e.clientY);
+  else { TX -= e.deltaX; TY -= e.deltaY; apply(); }
+}, {passive:false});
+
+document.getElementById("zi").onclick = () => zoomAt(1.25, innerWidth/2, innerHeight/2);
+document.getElementById("zo").onclick = () => zoomAt(1/1.25, innerWidth/2, innerHeight/2);
+document.getElementById("fit").onclick = () => fitTo(bounds());
+document.getElementById("all").onclick = () => { if (allOpen || open.size >= ORDER.length){ closeAll(); setAll(false); fitTo(MAP); } else openAll(); };
+const hide = document.getElementById("hide");
+hide.onclick = () => {
+  const on = hide.getAttribute("aria-pressed") !== "true";
+  hide.setAttribute("aria-pressed", String(on));
+  document.body.classList.toggle("rebuild", on);
+  if (on) layer.querySelectorAll(".std.shown").forEach(n => n.classList.remove("shown"));
+};
+addEventListener("keydown", e => {
+  if (e.key !== "Escape" || e.target.closest("textarea")) return;
+  if (sheet.classList.contains("show")){ sheet.classList.remove("show"); document.body.classList.remove("sheet-open"); return; }
+  let best = null, z = -1; open.forEach((r, k) => { const zi = +r.el.style.zIndex || 0; if (zi > z){ z = zi; best = k; } });
+  if (best) closeCard(best);
+});
+addEventListener("resize", () => { if (!open.size) fitTo(MAP); });
+
+fitTo(MAP);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => open.forEach((r, k) => drawLink(k)));
+})();
+</script>
+
+</body></html>
